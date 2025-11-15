@@ -1,10 +1,11 @@
-
-import { LoginForm } from '@/components/auth/login-form'
+import { LoginForm } from "@/components/auth/login-form";
 
 const Page = () => {
   return (
-    <LoginForm/>
-  )
-}
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <LoginForm />
+    </div>
+  );
+};
 
-export default Page
+export default Page;
