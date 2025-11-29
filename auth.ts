@@ -1,15 +1,42 @@
-
-import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import NextAuth, { type DefaultSession } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 
+import { getUserByEmail, getUserById } from "@/data/user";
+import { LoginSchema } from "@/schemas";
 import authConfig from "./auth.config";
 import { db } from "./lib/db";
-import { LoginSchema } from "@/schemas";
-import { getUserByEmail } from "@/data/user";
 
+declare module "next-auth" {
+  interface Session {
+    user: {
+      role: "ADMIN" | "USER";
+    } & DefaultSession["user"];
+  }
+}
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  callbacks: {
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      if (token.role) {
+        session.user.role = token.role as "ADMIN" | "USER";
+      }
+      return session;
+    },
+    async jwt({ token }) {
+      if (!token.sub) return token;
+
+      const existingUser = await getUserById(token.sub);
+
+      if (!existingUser) return token;
+
+      token.role = existingUser.role;
+      return token;
+    },
+  },
   adapter: PrismaAdapter(db),
   /**
    * Session Strategy: JWT
@@ -63,22 +90,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-
-  callbacks: {
-    async jwt({ token, user }) {
-      // Add user ID to token
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      // Add user ID to session
-      if (token && session.user) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-  },
 });
