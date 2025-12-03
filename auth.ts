@@ -8,6 +8,9 @@ import { LoginSchema } from "@/schemas";
 import authConfig from "./auth.config";
 import { db } from "./lib/db";
 
+import Github from "next-auth/providers/github";
+import Google from "next-auth/providers/google";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -16,6 +19,18 @@ declare module "next-auth" {
   }
 }
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  pages:{
+    signIn: '/auth/login',
+    error: '/auth/error'
+  },
+  events:{ // ? hum iska use isiliye kar rahe hai taki jab bhi koi user apna account link kare to hum uska emailVerified field update kar sake
+    async linkAccount({user}){
+      await db.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      })
+    }
+  },
   callbacks: {
     async session({ session, token }) {
       if (token.sub && session.user) {
@@ -54,6 +69,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
 
   providers: [
+    Github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       name: "credentials",
       credentials: {
