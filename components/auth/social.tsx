@@ -1,6 +1,8 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_LOGIN_REDIRECT } from "@/route";
 
 // Google Icon Component with glassy red background
 const GoogleIcon = () => (
@@ -45,12 +47,10 @@ const GitHubIcon = () => (
 );
 
 export const Social = () => {
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
-  };
-
-  const handleGithubLogin = () => {
-    console.log("GitHub login clicked");
+  const onClick = (provider: "google" | "github") => {
+    signIn(provider, {
+      callbackUrl: DEFAULT_LOGIN_REDIRECT,
+    });
   };
 
   return (
@@ -58,7 +58,7 @@ export const Social = () => {
       <Button
         size="lg"
         className="w-full gap-x-2 cursor-pointer backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/40"
-        onClick={handleGoogleLogin}
+        onClick={() => onClick("google")}
       >
         <GoogleIcon />
         <span>Continue with Google</span>
@@ -66,7 +66,7 @@ export const Social = () => {
       <Button
         size="lg"
         className="w-full gap-x-2 cursor-pointer backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/40"
-        onClick={handleGithubLogin}
+        onClick={() => onClick("github")}
       >
         <GitHubIcon />
         <span>Continue with GitHub</span>
