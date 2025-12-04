@@ -1,20 +1,36 @@
 "use server";
 
 import { LoginSchema } from "@/schemas";
-import z from "zod";
+import z, { success } from "zod";
 import { signIn } from "@/auth";
 import { DEFAULT_LOGIN_REDIRECT } from "@/route";
 import { AuthError } from "next-auth";
 
-export const login = async (values: z.infer<typeof LoginSchema>) => {
+import { generateVerificationToken } from "@/lib/tokens";
+import { getUserByEmail } from "@/data/user";
 
-  const validateField = LoginSchema.safeParse(values)
+export const login = async (values: z.infer<typeof LoginSchema>) => {
+  const validateField = LoginSchema.safeParse(values);
 
   if (!validateField.success) {
-        return  {error:"Invalid Email ❌"}
+    return { error: "Invalid Email ❌" };
   }
 
-  const {email,password} = validateField.data;
+  const { email, password } = validateField.data;
+
+  const existingUser = await getUserByEmail(email);
+
+  if (!existingUser || !existingUser.email || !existingUser.password) {
+    // ? agar user exist nahi karta to hum verification token generate karenge aur user ko email bhejenge taaki wo apna account verify kar sake
+
+    return { error: "User does not exist ❌" };
+  }
+
+  if (!existingUser.emailVerified) {
+   const verificationToken = await generateVerificationToken(existingUser.email);
+
+   return {success: "Confirmation Email Sent!"  };
+  }
 
   try {
     const res = await signIn("credentials", {
@@ -25,11 +41,11 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     return res;
   } catch (error) {
     if (error instanceof AuthError) {
-      switch (error.type){
+      switch (error.type) {
         case "CredentialsSignin":
-          return {error:"Invalid Credentials ❌"};
+          return { error: "Invalid Credentials ❌" };
         default:
-          return {error:"Something went wrong ❌"};
+          return { error: "Something went wrong ❌" };
       }
     }
     throw error;
