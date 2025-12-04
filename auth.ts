@@ -19,19 +19,37 @@ declare module "next-auth" {
   }
 }
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  pages:{
-    signIn: '/auth/login',
-    error: '/auth/error'
+  pages: {
+    signIn: "/auth/login",
+    error: "/auth/error",
   },
-  events:{ // ? hum iska use isiliye kar rahe hai taki jab bhi koi user apna account link kare to hum uska emailVerified field update kar sake
-    async linkAccount({user}){
+  events: {
+    // ? hum iska use isiliye kar rahe hai taki jab bhi koi user apna account link kare to hum uska emailVerified field update kar sake
+    async linkAccount({ user }) {
       await db.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },
-      })
-    }
+      });
+    },
   },
   callbacks: {
+    async signIn({ account, user }) {
+      // * Basically hum ye check kar rahe hai ki yedi user OAuth provider se sign in kar raha hai to hum usko allow kar de rahe hai without email verification ke
+
+      if (account?.provider !== "credentials") {
+        return true;
+      }
+
+      if (!user.id) {
+        return false;
+      }
+
+      const existingUser = await getUserById(user.id);
+      if (!existingUser?.emailVerified) {
+        return false;
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub;
