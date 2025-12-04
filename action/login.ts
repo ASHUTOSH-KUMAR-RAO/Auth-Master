@@ -8,6 +8,7 @@ import { AuthError } from "next-auth";
 
 import { generateVerificationToken } from "@/lib/tokens";
 import { getUserByEmail } from "@/data/user";
+import { sendVerificationEmail } from "@/lib/mail";
 
 export const login = async (values: z.infer<typeof LoginSchema>) => {
   const validateField = LoginSchema.safeParse(values);
@@ -27,9 +28,15 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
   }
 
   if (!existingUser.emailVerified) {
-   const verificationToken = await generateVerificationToken(existingUser.email);
+    const verificationToken = await generateVerificationToken(
+      existingUser.email
+    );
 
-   return {success: "Confirmation Email Sent!"  };
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    );
+    return { success: "Confirmation Email Sent!" };
   }
 
   try {
