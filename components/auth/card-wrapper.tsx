@@ -44,7 +44,7 @@ export const CardWrapper = ({
         </CardFooter>
       )}
 
-      <CardFooter className="px-8 pb-6 pt-3 bg-sky-400/5 border-t border-sky-300/20">
+      <CardFooter className="flex justify-center px-8 pb-6 pt-3 bg-sky-400/5 border-t border-sky-300/20">
         <BackButton label={backButtonLabel} href={backButtonHref} />
       </CardFooter>
     </Card>
