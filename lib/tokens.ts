@@ -4,6 +4,31 @@ import { getVerifactionTokenByEmail } from "@/data/verification-token";
 import { v4 as uuidv4 } from "uuid";
 
 import { db } from "@/lib/db";
+import { getPasswordResetTokenByEmail } from "@/data/password-reset-token";
+
+export const generatePasswordResetToken = async (email: string) => {
+  const token = uuidv4();
+
+  const expires = new Date(new Date().getTime() + 3600 * 1000);
+
+  const existingToken = await getPasswordResetTokenByEmail(email);
+
+  if (existingToken) {
+    await db.passwordResetToken.delete({
+      where: { id: existingToken.id },
+    });
+  }
+
+  const passwordResetToken = await db.passwordResetToken.create({
+    data: {
+      email,
+      token,
+      expires,
+    },
+  });
+
+  return passwordResetToken;
+};
 
 export const generateVerificationToken = async (email: string) => {
   const token = uuidv4(); // ? yeha per hum uuid library ka use kar rahe hai taaki hum unique token generate kar sake uuid ka full form universally unique identifier hota hai jo basically ek aisa identifier hota hai jo globally unique hota hai aur isse hum kisi bhi entity ko uniquely identify kar sakte hai
@@ -21,7 +46,8 @@ export const generateVerificationToken = async (email: string) => {
     });
   }
 
-  const verificationToken = await db.verificationToken.create({ // ? yeha per hum naya token create kar rahe hai ,aur usme email,token aur expires ka data de rahe hai aur ye saab hum database me store kar rahe hai 
+  const verificationToken = await db.verificationToken.create({
+    // ? yeha per hum naya token create kar rahe hai ,aur usme email,token aur expires ka data de rahe hai aur ye saab hum database me store kar rahe hai
     data: {
       email,
       token,
