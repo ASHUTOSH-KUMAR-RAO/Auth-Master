@@ -110,8 +110,8 @@ export const generatePasswordResetToken = async (email: string) => {
   const token = uuidv4();
 
   // Set expiration to 1 hour from now
-  // Same calculation as 2FA: current time + 3600000 milliseconds
-  const expires = new Date(new Date().getTime() + 3600 * 1000);
+  // Same calculation as 2FA: current time + 5 minutes
+  const expires = new Date(new Date().getTime() + 5 * 60 * 1000);
 
   // Check for existing password reset token
   // User might have requested reset multiple times
